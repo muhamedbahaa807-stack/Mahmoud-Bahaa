@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useLocation, Link } from 'react-router-dom';
 import api from '../api/axios.js';
 import OneStudent from '../components/oneStudent.jsx';
-
+import { useNavigate } from 'react-router-dom';
 const OWNERS = ['الطالب', 'الأب', 'الأم', 'ولي الأمر'];
 const ATTENDANCE_OPTIONS = ['حاضر', 'متأخر', 'غائب'];
 const RATE_OPTIONS = ['ممتاز', 'جيد جدا', 'مقبول'];
