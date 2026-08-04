@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon --exec node --import dotenv/config ./Server/index.js",
-    "start": "node --import dotenv/config ./Server/index.js"
+    "dev": "nodemon --exec node --import dotenv/config ./server/index.js",
+    "start": "node --import dotenv/config ./server/index.js"
   },
   "keywords": [],
   "author": "",
