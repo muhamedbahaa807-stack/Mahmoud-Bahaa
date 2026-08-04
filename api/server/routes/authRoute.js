@@ -26,10 +26,10 @@ router.post('/signIN', checkSchema(loginschema), async (req, res) => {
     }
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
-    res.cookie('refreshToken', refreshToken, {
+     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: true,
+      sameSite: 'None',
       maxAge: 60000 * 60 * 24,
     });
     res.status(200).json({ message: 'LogIN succesfully', user, accessToken });
