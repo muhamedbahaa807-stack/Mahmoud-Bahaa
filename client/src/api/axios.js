@@ -33,7 +33,7 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    if (originalRequest.url?.includes('/users/refresh')) {
+    if (originalRequest.url?.includes('/refresh')) {
       removeAccessToken();
       return Promise.reject(error);
     }
@@ -45,7 +45,7 @@ api.interceptors.response.use(
     originalRequest._retry = true;
 
     try {
-      const { data } = await api.post('/users/refresh');
+      const { data } = await api.post('/refresh');
 
       setAccessToken(data.accessToken);
 

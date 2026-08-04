@@ -1,16 +1,20 @@
 import React from 'react';
-
-const homePage = () => {
+import { Link } from 'react-router-dom';
+import Hero from '../components/Hero.jsx';
+const HomePage = () => {
   return (
-    <div className="relative min-h-screen overflow-hidden">
+    <div dir="ltr" className="relative min-h-screen overflow-hidden">
+      {/* Background */}
       <img
         src="/backGround.png"
-        className="absolute inset-0 w-full h-full object-cover -z-10"
         alt=""
+        className="absolute inset-0 -z-20 h-full w-full object-cover"
       />
-      أأأأأأأأأأأأأأأأأأأأأأأأأأأ
+
+      {/* Hero */}
+      <Hero />
     </div>
   );
 };
 
-export default homePage;
+export default HomePage;

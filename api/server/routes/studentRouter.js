@@ -1,10 +1,19 @@
 import { Router } from 'express';
+import mongoose from 'mongoose';
 import { isAdmin, verfiyAccessToken } from '../utils/middlewares.js';
 import { checkSchema, validationResult } from 'express-validator';
 import Student from '../../models/Student.js';
 import Grade from '../../models/Grade.js';
 import { studentSchema } from '../utils/validation.js';
 const router = Router();
+router.get('/students', verfiyAccessToken, isAdmin, async (req, res) => {
+  try {
+    const students = await Student.find();
+    return res.status(200).json({ students });
+  } catch (err) {
+    return res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
 router.get(
   '/grades/:id/students',
   verfiyAccessToken,
@@ -80,11 +89,7 @@ router.put(
   '/students/Update/:id',
   verfiyAccessToken,
   isAdmin,
-  checkSchema(studentSchema),
   async (req, res) => {
-    const result = validationResult(req);
-    if (!result.isEmpty())
-      return res.status(400).json({ error: result.array() });
     const { id } = req.params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({

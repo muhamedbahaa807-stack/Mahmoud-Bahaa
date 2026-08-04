@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 
 export const generateAccessToken = (user) => {
-  jwt.sign(
+  return jwt.sign(
     {
       id: user._id,
       role: user.role,
@@ -13,7 +13,7 @@ export const generateAccessToken = (user) => {
   );
 };
 export const generateRefreshToken = (user) => {
-  jwt.sign(
+  return jwt.sign(
     {
       id: user._id,
     },

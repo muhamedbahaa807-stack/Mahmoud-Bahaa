@@ -20,11 +20,11 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const checkUser = async () => {
       try {
-        const refreshRes = await api.post('/users/refresh');
+        const refreshRes = await api.post('/refresh');
 
         setAccessToken(refreshRes.data.accessToken);
 
-        const { data } = await api.get('/users/profile');
+        const { data } = await api.get('/profile');
 
         setUser(data);
       } catch (err) {

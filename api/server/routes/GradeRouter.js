@@ -67,8 +67,8 @@ router.put(
     }
   },
 );
-router.delete('grade/:id', verfiyAccessToken, isAdmin, async (req, res) => {
-  const { id } = req.body;
+router.delete('/grade/:id', verfiyAccessToken, isAdmin, async (req, res) => {
+  const { id } = req.params;
   try {
     const deletedGrade = await Grade.findByIdAndDelete(id);
     if (!deletedGrade)
