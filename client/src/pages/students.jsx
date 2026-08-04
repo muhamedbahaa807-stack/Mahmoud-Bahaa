@@ -4,6 +4,10 @@ import api from '../api/axios.js';
 import OneStudent from '../components/oneStudent.jsx';
 import { useNavigate } from 'react-router-dom';
 const OWNERS = ['الطالب', 'الأب', 'الأم', 'ولي الأمر'];
+const STUDYING_OPTIONS = [
+  { value: 'عام', label: 'عام' },
+  { value: 'ازهر', label: 'أزهر' },
+];
 const ATTENDANCE_OPTIONS = ['حاضر', 'متأخر', 'غائب'];
 const RATE_OPTIONS = ['ممتاز', 'جيد جدا', 'مقبول'];
 const MONTHS = [
@@ -36,6 +40,7 @@ const students = () => {
   const [formMode, setFormMode] = useState('add');
   const [formStudent, setFormStudent] = useState(null);
   const [formName, setFormName] = useState('');
+  const [formStudying, setFormStudying] = useState('');
   const [formPhones, setFormPhones] = useState([
     { owner: 'الطالب', number: '' },
   ]);
@@ -79,6 +84,15 @@ const students = () => {
     s.name.toLowerCase().includes(search.toLowerCase()),
   );
 
+  const groupedStudents = STUDYING_OPTIONS.map(({ value, label }) => ({
+    value,
+    label,
+    students: filteredStudents.filter((s) => s.studying === value),
+  }));
+  const otherStudents = filteredStudents.filter(
+    (s) => !STUDYING_OPTIONS.some((o) => o.value === s.studying),
+  );
+
   // ---------- Add / Edit form helpers ----------
   const availableOwners = (currentIndex) => {
     const usedElsewhere = formPhones
@@ -109,6 +123,7 @@ const students = () => {
     setFormMode('add');
     setFormStudent(null);
     setFormName('');
+    setFormStudying('');
     setFormPhones([{ owner: 'الطالب', number: '' }]);
     setFormError('');
     setFormOpen(true);
@@ -118,6 +133,7 @@ const students = () => {
     setFormMode('edit');
     setFormStudent(student);
     setFormName(student.name);
+    setFormStudying(student.studying || '');
     setFormPhones(
       student.phones?.length
         ? student.phones
@@ -133,9 +149,15 @@ const students = () => {
     e.preventDefault();
     setFormError('');
     setFormSubmitting(true);
+    if (!formStudying) {
+      setFormError('اختار الحالة الدراسية');
+      setFormSubmitting(false);
+      return;
+    }
     try {
       const payload = {
         name: formName,
+        studying: formStudying,
         phones: formPhones.filter((p) => p.owner && p.number),
       };
 
@@ -360,17 +382,57 @@ const students = () => {
             </p>
           </div>
         ) : (
-          <div className="flex flex-col gap-4">
-            {filteredStudents.map((student) => (
-              <OneStudent
-                key={student._id}
-                student={student}
-                rank={students.findIndex((s) => s._id === student._id)}
-                onEdit={openEditForm}
-                onDelete={setDeleteStudent}
-                onAction={openAction}
-              />
-            ))}
+          <div className="flex flex-col gap-10">
+            {groupedStudents.map(
+              (group) =>
+                group.students.length > 0 && (
+                  <div key={group.value} className="flex flex-col gap-4">
+                    <div>
+                      <h2 className="font-display text-3xl font-extrabold text-ink">
+                        {group.label}
+                      </h2>
+                      <p className="mt-1 text-sm font-medium text-ink/50">
+                        طلاب {group.label}
+                      </p>
+                    </div>
+
+                    {group.students.map((student) => (
+                      <OneStudent
+                        key={student._id}
+                        student={student}
+                        rank={students.findIndex((s) => s._id === student._id)}
+                        onEdit={openEditForm}
+                        onDelete={setDeleteStudent}
+                        onAction={openAction}
+                      />
+                    ))}
+                  </div>
+                ),
+            )}
+
+            {otherStudents.length > 0 && (
+              <div className="flex flex-col gap-4">
+                <div>
+                  <h2 className="font-display text-3xl font-extrabold text-ink">
+                    غير محدد
+                  </h2>
+                  <p className="mt-1 text-sm font-medium text-ink/50">
+                    طلاب من غير حالة دراسية محددة
+                  </p>
+                </div>
+
+                {otherStudents.map((student) => (
+                  <OneStudent
+                    key={student._id}
+                    student={student}
+                    rank={students.findIndex((s) => s._id === student._id)}
+                    onEdit={openEditForm}
+                    onDelete={setDeleteStudent}
+                    onAction={openAction}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -418,6 +480,27 @@ const students = () => {
                              text-ink placeholder:text-ink/30 outline-none transition
                              focus:border-amber-600/60 focus:bg-white focus:ring-2 focus:ring-amber-600/20"
                 />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium text-ink/80">
+                  الحالة الدراسية
+                </label>
+                <select
+                  value={formStudying}
+                  onChange={(e) => setFormStudying(e.target.value)}
+                  required
+                  className="w-full rounded-2xl border border-white/70 bg-white/70 px-4 py-3
+                             text-ink outline-none transition focus:border-amber-600/60
+                             focus:bg-white focus:ring-2 focus:ring-amber-600/20"
+                >
+                  <option value="">اختار الحالة الدراسية</option>
+                  {STUDYING_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="flex flex-col gap-3">

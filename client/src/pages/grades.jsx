@@ -33,14 +33,23 @@ const grades = () => {
   const [deleteGrade, setDeleteGrade] = useState(null);
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
 
+  const [studentCounts, setStudentCounts] = useState({});
+
   useEffect(() => {
     const getGrades = async () => {
       setLoading(true);
       try {
-        const { data } = await api.get('/grades');
-        setgrades(data.grades);
+        const [{ data: gradesData }, { data: studentsData }] =
+          await Promise.all([api.get('/grades'), api.get('/students')]);
+        setgrades(gradesData.grades);
+
+        const counts = {};
+        (studentsData.students || []).forEach((s) => {
+          counts[s.gradeId] = (counts[s.gradeId] || 0) + 1;
+        });
+        setStudentCounts(counts);
       } catch (err) {
-        setError(err.response.data.message || 'Failed to load Grades');
+        setError(err.response?.data?.message || 'Failed to load Grades');
       }
       setLoading(false);
     };
@@ -229,6 +238,7 @@ const grades = () => {
               <OneGrade
                 key={grade._id}
                 grade={grade}
+                studentsCount={studentCounts[grade._id] || 0}
                 onEdit={openEditModal}
                 onDelete={setDeleteGrade}
               />

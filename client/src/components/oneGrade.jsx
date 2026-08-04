@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 
-const OneGrade = ({ grade, onEdit, onDelete }) => {
+const OneGrade = ({ grade, studentsCount, onEdit, onDelete }) => {
   return (
     <Link
       to={`/grades/${grade._id}/students`}
@@ -42,9 +42,14 @@ const OneGrade = ({ grade, onEdit, onDelete }) => {
       </div>
 
       <div dir="rtl" className="flex flex-col gap-3">
-        <span className="font-display text-xl font-bold text-ink">
-          {grade.name}
-        </span>
+        <div className="flex flex-wrap items-center gap-2 pl-20">
+          <span className="font-display text-xl font-bold text-ink">
+            {grade.name}
+          </span>
+          <span className="whitespace-nowrap rounded-full bg-ink/5 px-3 py-1 text-xs font-bold text-ink/70">
+            {studentsCount ?? 0} طالب
+          </span>
+        </div>
 
         {grade.session?.length > 0 && (
           <div className="flex flex-wrap gap-2">

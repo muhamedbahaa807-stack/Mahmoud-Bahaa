@@ -90,6 +90,11 @@ const studentDetails = () => {
                   <h1 className="font-display mt-1 text-3xl font-extrabold text-ink">
                     {student.name}
                   </h1>
+                  {student.studying && (
+                    <span className="mt-2 inline-block rounded-full bg-ink/5 px-3 py-1 text-xs font-bold text-ink/70">
+                      {student.studying === 'ازهر' ? 'أزهر' : student.studying}
+                    </span>
+                  )}
                 </div>
                 <div className="rounded-2xl bg-ink px-5 py-3 text-center text-white">
                   <p className="text-2xl font-extrabold">{student.xp}</p>
