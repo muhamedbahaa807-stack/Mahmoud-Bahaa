@@ -11,9 +11,7 @@ import {
 import { verfiyAccessToken } from '../utils/middlewares.js';
 import jwt from 'jsonwebtoken';
 const router = Router();
-router.post('/signIN', checkSchema(loginschema), async (req, res) => {
-  const result = validationResult(req);
-  if (!result.isEmpty()) return res.status(400).send({ error: result.array() });
+router.post('/signIN', async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await User.findOne({ email });
@@ -26,7 +24,7 @@ router.post('/signIN', checkSchema(loginschema), async (req, res) => {
     }
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
-     res.cookie('refreshToken', refreshToken, {
+    res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: true,
       sameSite: 'None',
@@ -42,29 +40,21 @@ router.post('/signIN', checkSchema(loginschema), async (req, res) => {
 router.get('/profile', verfiyAccessToken, (req, res) => {
   res.status(200).json(req.user);
 });
-router.put(
-  '/updateProfile',
-  verfiyAccessToken,
-  checkSchema(updateProfileSchema),
-  async (req, res) => {
-    const result = validationResult(req);
-    if (!result.isEmpty())
-      return res.status(404).json({ error: result.array() });
-    const { email, phone, name } = req.body;
-    try {
-      const updatedUser = await User.findByIdAndUpdate(
-        req.user._id,
-        { name, email, phone },
-        { new: true, runValidators: true },
-      ).select('-password');
-      res.status(200).json({ message: 'Profile updated', user: updatedUser });
-    } catch (err) {
-      return res.status(500).json({
-        message: 'Internal Server Error',
-      });
-    }
-  },
-);
+router.put('/updateProfile', verfiyAccessToken, async (req, res) => {
+  const { email, phone, name } = req.body;
+  try {
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user._id,
+      { name, email, phone },
+      { new: true, runValidators: true },
+    ).select('-password');
+    res.status(200).json({ message: 'Profile updated', user: updatedUser });
+  } catch (err) {
+    return res.status(500).json({
+      message: 'Internal Server Error',
+    });
+  }
+});
 router.put('/change-password', verfiyAccessToken, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;

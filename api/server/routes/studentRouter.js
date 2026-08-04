@@ -50,11 +50,7 @@ router.post(
   '/grades/:id/students',
   verfiyAccessToken,
   isAdmin,
-  checkSchema(studentSchema),
   async (req, res) => {
-    const result = validationResult(req);
-    if (!result.isEmpty())
-      return res.status(400).json({ error: result.array() });
     const { id } = req.params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({

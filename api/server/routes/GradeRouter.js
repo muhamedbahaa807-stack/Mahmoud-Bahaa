@@ -15,58 +15,40 @@ router.get('/grades', verfiyAccessToken, isAdmin, async (req, res) => {
     });
   }
 });
-router.post(
-  '/grade',
-  verfiyAccessToken,
-  isAdmin,
-  checkSchema(gradeSchema),
-  async (req, res) => {
-    const result = validationResult(req);
-    if (!result.isEmpty())
-      return res.status(400).json({ error: result.array() });
-    const { name, session } = req.body;
-    try {
-      const existingGrade = await Grade.findOne({ name });
+router.post('/grade', verfiyAccessToken, isAdmin, async (req, res) => {
+  const { name, session } = req.body;
+  try {
+    const existingGrade = await Grade.findOne({ name });
 
-      if (existingGrade) {
-        return res.status(409).json({
-          message: 'Grade already exists',
-        });
-      }
-      const newGrade = await Grade.create({ name, session });
-      res.status(201).json({ message: 'Grade created successfully', newGrade });
-    } catch (err) {
-      return res.status(500).json({
-        message: 'Internal Server Error',
+    if (existingGrade) {
+      return res.status(409).json({
+        message: 'Grade already exists',
       });
     }
-  },
-);
-router.put(
-  '/updateGrade/:id',
-  verfiyAccessToken,
-  isAdmin,
-  checkSchema(gradeSchema),
-  async (req, res) => {
-    const result = validationResult(req);
-    if (!result.isEmpty())
-      return res.status(400).json({ error: result.array() });
-    const { name, session } = req.body;
-    const { id } = req.params;
-    try {
-      const updatedGrade = await Grade.findByIdAndUpdate(
-        id,
-        { name, session },
-        { new: true, runValidators: true },
-      );
-      res.status(200).json({ message: 'Grade Updated', grade: updatedGrade });
-    } catch (err) {
-      return res.status(500).json({
-        message: 'Internal Server Error',
-      });
-    }
-  },
-);
+    const newGrade = await Grade.create({ name, session });
+    res.status(201).json({ message: 'Grade created successfully', newGrade });
+  } catch (err) {
+    return res.status(500).json({
+      message: 'Internal Server Error',
+    });
+  }
+});
+router.put('/updateGrade/:id', verfiyAccessToken, isAdmin, async (req, res) => {
+  const { name, session } = req.body;
+  const { id } = req.params;
+  try {
+    const updatedGrade = await Grade.findByIdAndUpdate(
+      id,
+      { name, session },
+      { new: true, runValidators: true },
+    );
+    res.status(200).json({ message: 'Grade Updated', grade: updatedGrade });
+  } catch (err) {
+    return res.status(500).json({
+      message: 'Internal Server Error',
+    });
+  }
+});
 router.delete('/grade/:id', verfiyAccessToken, isAdmin, async (req, res) => {
   const { id } = req.params;
   try {
