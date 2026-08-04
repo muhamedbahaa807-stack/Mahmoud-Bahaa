@@ -5,6 +5,10 @@ const studentSchema = mongoose.Schema({
     type: String,
     required: true,
   },
+  studying: {
+    type: String,
+    enum: ['عام', 'ازهر'],
+  },
   phones: [
     {
       owner: {

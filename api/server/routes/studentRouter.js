@@ -57,7 +57,7 @@ router.post(
         message: 'Invalid Grade ID format',
       });
     }
-    const { name, phones } = req.body;
+    const { name, phones, studying } = req.body;
     try {
       const grade = await Grade.findById(id);
 
@@ -74,7 +74,12 @@ router.post(
       if (isExist) {
         return res.status(409).json({ message: 'Phone number already exists' });
       }
-      const newStudent = await Student.create({ name, phones, gradeId: id });
+      const newStudent = await Student.create({
+        name,
+        phones,
+        studying,
+        gradeId: id,
+      });
       res.status(201).json({ message: 'Student created', Student: newStudent });
     } catch (err) {
       return res.status(500).json({ message: 'Internal Server Error' });
@@ -92,7 +97,7 @@ router.put(
         message: 'Invalid Student ID format',
       });
     }
-    const { name, phones } = req.body;
+    const { name, phones, studying } = req.body;
     try {
       const student = await Student.findById(id);
 
@@ -112,7 +117,7 @@ router.put(
       }
       const updatedStudent = await Student.findByIdAndUpdate(
         id,
-        { name, phones },
+        { name, phones, studying },
         { new: true, runValidators: true },
       );
       res
