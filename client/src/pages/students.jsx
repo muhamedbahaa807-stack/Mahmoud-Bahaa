@@ -84,15 +84,6 @@ const students = () => {
     s.name.toLowerCase().includes(search.toLowerCase()),
   );
 
-  const groupedStudents = STUDYING_OPTIONS.map(({ value, label }) => ({
-    value,
-    label,
-    students: filteredStudents.filter((s) => s.studying === value),
-  }));
-  const otherStudents = filteredStudents.filter(
-    (s) => !STUDYING_OPTIONS.some((o) => o.value === s.studying),
-  );
-
   // ---------- Add / Edit form helpers ----------
   const availableOwners = (currentIndex) => {
     const usedElsewhere = formPhones
@@ -382,57 +373,17 @@ const students = () => {
             </p>
           </div>
         ) : (
-          <div className="flex flex-col gap-10">
-            {groupedStudents.map(
-              (group) =>
-                group.students.length > 0 && (
-                  <div key={group.value} className="flex flex-col gap-4">
-                    <div>
-                      <h2 className="font-display text-3xl font-extrabold text-ink">
-                        {group.label}
-                      </h2>
-                      <p className="mt-1 text-sm font-medium text-ink/50">
-                        طلاب {group.label}
-                      </p>
-                    </div>
-
-                    {group.students.map((student) => (
-                      <OneStudent
-                        key={student._id}
-                        student={student}
-                        rank={students.findIndex((s) => s._id === student._id)}
-                        onEdit={openEditForm}
-                        onDelete={setDeleteStudent}
-                        onAction={openAction}
-                      />
-                    ))}
-                  </div>
-                ),
-            )}
-
-            {otherStudents.length > 0 && (
-              <div className="flex flex-col gap-4">
-                <div>
-                  <h2 className="font-display text-3xl font-extrabold text-ink">
-                    غير محدد
-                  </h2>
-                  <p className="mt-1 text-sm font-medium text-ink/50">
-                    طلاب من غير حالة دراسية محددة
-                  </p>
-                </div>
-
-                {otherStudents.map((student) => (
-                  <OneStudent
-                    key={student._id}
-                    student={student}
-                    rank={students.findIndex((s) => s._id === student._id)}
-                    onEdit={openEditForm}
-                    onDelete={setDeleteStudent}
-                    onAction={openAction}
-                  />
-                ))}
-              </div>
-            )}
+          <div className="flex flex-col gap-4">
+            {filteredStudents.map((student) => (
+              <OneStudent
+                key={student._id}
+                student={student}
+                rank={students.findIndex((s) => s._id === student._id)}
+                onEdit={openEditForm}
+                onDelete={setDeleteStudent}
+                onAction={openAction}
+              />
+            ))}
           </div>
         )}
       </div>
