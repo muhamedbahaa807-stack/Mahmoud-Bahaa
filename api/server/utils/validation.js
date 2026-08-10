@@ -119,12 +119,4 @@ export const studentSchema = {
       errorMessage: 'Grade is required',
     },
   },
-  gradeId: {
-    notEmpty: {
-      errorMessage: 'Grade is required',
-    },
-    isMongoId: {
-      errorMessage: 'Invalid Grade ID',
-    },
-  },
 };
