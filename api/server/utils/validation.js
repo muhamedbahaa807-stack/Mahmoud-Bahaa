@@ -18,13 +18,6 @@ export const loginschema = {
       },
       errorMessage: 'Password must be between 8 and 32 characters',
     },
-    matches: {
-      options: [
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&.#_-])[A-Za-z\d@$!%*?&.#_-]+$/,
-      ],
-      errorMessage:
-        'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
-    },
   },
 };
 

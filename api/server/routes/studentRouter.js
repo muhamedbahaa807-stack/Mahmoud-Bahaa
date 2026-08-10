@@ -167,45 +167,7 @@ router.get('/students/:id', verfiyAccessToken, isAdmin, async (req, res) => {
 
   res.status(200).json({ student });
 });
-router.post(
-  '/students/:id/attendance',
-  verfiyAccessToken,
-  isAdmin,
-  async (req, res) => {
-    const { id } = req.params;
-    const { status } = req.body;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      const error = new Error('Invalid student ID format');
-      error.status = 400;
-      throw error;
-    }
-
-    if (!['حاضر', 'متأخر', 'غائب'].includes(status)) {
-      const error = new Error('Invalid attendance status');
-      error.status = 400;
-      throw error;
-    }
-
-    const student = await Student.findById(id);
-
-    if (!student) {
-      const error = new Error('Student not found');
-      error.status = 404;
-      throw error;
-    }
-
-    student.attendance.push({
-      status,
-    });
-
-    await student.save();
-
-    res.status(201).json({
-      message: 'Attendance added successfully',
-    });
-  },
-);
 router.get(
   '/students/:id/attendance',
   verfiyAccessToken,
@@ -248,59 +210,7 @@ router.get(
     });
   },
 );
-router.post(
-  '/students/:id/exams',
-  verfiyAccessToken,
-  isAdmin,
-  async (req, res) => {
-    const { id } = req.params;
-    const { name, studentScore } = req.body;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      const error = new Error('Invalid student ID format');
-      error.status = 400;
-      throw error;
-    }
-
-    if (!name || studentScore === undefined) {
-      const error = new Error('Exam name and student score are required');
-      error.status = 400;
-      throw error;
-    }
-
-    if (studentScore < 0 || studentScore > 30) {
-      const error = new Error('Student score must be between 0 and 30');
-      error.status = 400;
-      throw error;
-    }
-
-    const student = await Student.findById(id);
-
-    if (!student) {
-      const error = new Error('Student not found');
-      error.status = 404;
-      throw error;
-    }
-
-    const xpEarned = Math.round((studentScore / 30) * 100);
-
-    student.exams.push({
-      name,
-      totalScore: 30,
-      studentScore,
-      xpEarned,
-    });
-
-    student.xp += xpEarned;
-
-    await student.save();
-
-    res.status(201).json({
-      message: 'Exam added successfully',
-      xpEarned,
-    });
-  },
-);
 router.get(
   '/students/:id/exams',
   verfiyAccessToken,
@@ -328,80 +238,215 @@ router.get(
   },
 );
 router.post(
-  '/students/:id/session',
+  '/grades/:id/bulk-attendance',
   verfiyAccessToken,
   isAdmin,
   async (req, res) => {
     const { id } = req.params;
-    const { homeWork, rate } = req.body;
+    const { attendances } = req.body; // Array of { studentId, status }
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      const error = new Error('Invalid student ID format');
+      const error = new Error('Invalid Grade ID format');
       error.status = 400;
       throw error;
     }
 
-    if (!['نعم', 'لا'].includes(homeWork)) {
-      const error = new Error('Invalid homework status');
-      error.status = 400;
-      throw error;
-    }
-
-    if (!['ممتاز', 'جيد جدا', 'مقبول'].includes(rate)) {
-      const error = new Error('Invalid rate');
-      error.status = 400;
-      throw error;
-    }
-
-    const student = await Student.findById(id);
-
-    if (!student) {
-      const error = new Error('Student not found');
+    const grade = await Grade.findById(id);
+    if (!grade) {
+      const error = new Error('Grade not found');
       error.status = 404;
       throw error;
     }
 
-    let xpEarned = 0;
+    // --- تحقق 1: الالتزام بمواعيد الصف الأسبوعية ---
+    if (grade.days && grade.days.length > 0) {
+      const daysMap = [
+        'الأحد',
+        'الإثنين',
+        'الثلاثاء',
+        'الأربعاء',
+        'الخميس',
+        'الجمعة',
+        'السبت',
+      ];
+      const todayName = daysMap[new Date().getDay()];
 
-    // Homework XP
-    if (homeWork === 'نعم') {
-      xpEarned += 5;
+      if (!grade.days.includes(todayName)) {
+        const error = new Error(
+          `اليوم ليس من مواعيد هذا الصف (${grade.days.join(' - ')})`,
+        );
+        error.status = 400;
+        throw error;
+      }
     }
 
-    // Rate XP
-    switch (rate) {
-      case 'ممتاز':
-        xpEarned += 5;
-        break;
+    // --- تحقق 2: منع التكرار في نفس اليوم ---
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
 
-      case 'جيد جدا':
-        xpEarned += 4;
-        break;
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
 
-      case 'مقبول':
-        xpEarned += 3;
-        break;
+    const checkStudent = await Student.findOne({
+      gradeId: id,
+      'attendance.date': { $gte: startOfToday, $lte: endOfToday },
+    });
+
+    if (checkStudent) {
+      const error = new Error('تم تسجيل بداية حصة لهذا الصف بالفعل اليوم!');
+      error.status = 400;
+      throw error;
     }
 
-    student.homeWork.push({
-      status: homeWork,
+    // --- إدخال الحضور دفعة واحدة ---
+    const bulkOps = attendances.map((item) => ({
+      updateOne: {
+        filter: { _id: item.studentId },
+        update: {
+          $push: { attendance: { status: item.status, date: new Date() } },
+        },
+      },
+    }));
+
+    await Student.bulkWrite(bulkOps);
+
+    const updatedStudents = await Student.find({ gradeId: id }).sort({
+      xp: -1,
     });
-
-    student.rate.push({
-      status: rate,
-    });
-
-    student.xp += xpEarned;
-
-    await student.save();
-
-    res.status(201).json({
-      message: 'Session saved successfully',
-      xpEarned,
-      totalXP: student.xp,
+    res.status(200).json({
+      message: 'تم تسجيل بداية الحصة بنجاح',
+      students: updatedStudents,
     });
   },
 );
+
+// ==========================================
+// 2. تسجيل الواجب الجماعي (Bulk Homework)
+// ==========================================
+router.post(
+  '/grades/:id/bulk-homework',
+  verfiyAccessToken,
+  isAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    const { homeworks } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      const error = new Error('Invalid Grade ID format');
+      error.status = 400;
+      throw error;
+    }
+
+    const students = await Student.find({ gradeId: id });
+    for (const item of homeworks) {
+      const student = students.find((s) => s._id.toString() === item.studentId);
+      if (student) {
+        let xpEarned = item.status === 'نعم' ? 5 : 0;
+        student.homeWork.push({ status: item.status });
+        student.xp += xpEarned;
+        await student.save();
+      }
+    }
+
+    const updatedStudents = await Student.find({ gradeId: id }).sort({
+      xp: -1,
+    });
+    res
+      .status(200)
+      .json({ message: 'تم تسجيل الواجب بنجاح', students: updatedStudents });
+  },
+);
+
+// ==========================================
+// 3. تسجيل التقييم الجماعي (Bulk Rate)
+// ==========================================
+router.post(
+  '/grades/:id/bulk-rate',
+  verfiyAccessToken,
+  isAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    const { rates } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      const error = new Error('Invalid Grade ID format');
+      error.status = 400;
+      throw error;
+    }
+
+    const students = await Student.find({ gradeId: id });
+    for (const item of rates) {
+      const student = students.find((s) => s._id.toString() === item.studentId);
+      if (student) {
+        let xpEarned = 0;
+        if (item.rate === 'ممتاز') xpEarned = 5;
+        else if (item.rate === 'جيد جدا') xpEarned = 4;
+        else if (item.rate === 'مقبول') xpEarned = 3;
+
+        student.rate.push({ status: item.rate });
+        student.xp += xpEarned;
+        await student.save();
+      }
+    }
+
+    const updatedStudents = await Student.find({ gradeId: id }).sort({
+      xp: -1,
+    });
+    res
+      .status(200)
+      .json({ message: 'تم تسجيل التقييم بنجاح', students: updatedStudents });
+  },
+);
+
+// ==========================================
+// 4. تسجيل الامتحان الجماعي (Bulk Exam)
+// ==========================================
+router.post(
+  '/grades/:id/bulk-exams',
+  verfiyAccessToken,
+  isAdmin,
+  async (req, res) => {
+    const { id } = req.params;
+    const { name, scores } = req.body;
+
+    if (!name) {
+      const error = new Error('اسم الامتحان مطلوب');
+      error.status = 400;
+      throw error;
+    }
+
+    const students = await Student.find({ gradeId: id });
+    for (const item of scores) {
+      const student = students.find((s) => s._id.toString() === item.studentId);
+      if (
+        student &&
+        item.studentScore !== undefined &&
+        item.studentScore !== ''
+      ) {
+        const score = Number(item.studentScore);
+        const xpEarned = Math.round((score / 30) * 100);
+
+        student.exams.push({
+          name,
+          totalScore: 30,
+          studentScore: score,
+          xpEarned,
+        });
+        student.xp += xpEarned;
+        await student.save();
+      }
+    }
+
+    const updatedStudents = await Student.find({ gradeId: id }).sort({
+      xp: -1,
+    });
+    res.status(200).json({
+      message: 'تم إدخال درجات الامتحان بنجاح',
+      students: updatedStudents,
+    });
+  },
+);
+
 router.put(
   '/students/:id/payments',
   verfiyAccessToken,
