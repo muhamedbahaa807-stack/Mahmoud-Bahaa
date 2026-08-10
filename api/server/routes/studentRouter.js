@@ -341,7 +341,14 @@ router.post(
     for (const item of homeworks) {
       const student = students.find((s) => s._id.toString() === item.studentId);
       if (student) {
-        let xpEarned = item.status === 'نعم' ? 5 : 0;
+        let xpEarned =
+          item.status === 'ممتاز'
+            ? 5
+            : 'جيد'
+              ? 4
+              : 'مقبول'
+                ? 2
+                : ('لم يتم' ?? 0);
         student.homeWork.push({ status: item.status });
         student.xp += xpEarned;
         await student.save();
@@ -359,7 +366,6 @@ router.post(
 
 // ==========================================
 // 3. تسجيل التقييم الجماعي (Bulk Rate)
-// ==========================================
 router.post(
   '/grades/:id/bulk-rate',
   verfiyAccessToken,
@@ -380,8 +386,8 @@ router.post(
       if (student) {
         let xpEarned = 0;
         if (item.rate === 'ممتاز') xpEarned = 5;
-        else if (item.rate === 'جيد جدا') xpEarned = 4;
-        else if (item.rate === 'مقبول') xpEarned = 3;
+        else if (item.rate === 'جيد ') xpEarned = 4;
+        else if (item.rate === 'مقبول') xpEarned = 2;
 
         student.rate.push({ status: item.rate });
         student.xp += xpEarned;
@@ -400,7 +406,6 @@ router.post(
 
 // ==========================================
 // 4. تسجيل الامتحان الجماعي (Bulk Exam)
-// ==========================================
 router.post(
   '/grades/:id/bulk-exams',
   verfiyAccessToken,
@@ -501,4 +506,5 @@ router.put(
     });
   },
 );
+
 export default router;

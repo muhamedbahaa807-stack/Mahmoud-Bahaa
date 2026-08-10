@@ -97,7 +97,7 @@ const studentSchema = mongoose.Schema({
       },
       status: {
         type: String,
-        enum: ['لا', 'نعم'],
+        enum: ['جيد', 'مقبول', 'لم يتم', 'ممتاز'],
       },
     },
   ],
@@ -109,7 +109,7 @@ const studentSchema = mongoose.Schema({
       },
       status: {
         type: String,
-        enum: ['مقبول', 'جيد جدا', 'ممتاز'],
+        enum: ['مقبول', 'جيد', 'ممتاز'],
       },
     },
   ],

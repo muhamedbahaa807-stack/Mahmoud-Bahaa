@@ -23,7 +23,7 @@ const MONTHS = [
   'ديسمبر',
 ];
 const ATTENDANCE_OPTIONS = ['حاضر', 'متأخر', 'غائب'];
-const RATE_OPTIONS = ['ممتاز', 'جيد جدا', 'مقبول'];
+const RATE_OPTIONS = ['جيد', 'مقبول', 'ممتاز'];
 
 const Students = () => {
   const { gradeId } = useParams();
@@ -98,8 +98,8 @@ const Students = () => {
     const initialMap = {};
     students.forEach((s) => {
       if (type === 'attendance') initialMap[s._id] = 'حاضر';
-      if (type === 'homework') initialMap[s._id] = 'نعم';
-      if (type === 'rate') initialMap[s._id] = 'ممتاز';
+      if (type === 'homework') initialMap[s._id] = 'جيد';
+      if (type === 'rate') initialMap[s._id] = 'جيد';
       if (type === 'exam') initialMap[s._id] = '';
     });
 
@@ -500,7 +500,7 @@ const Students = () => {
 
                     {bulkType === 'homework' && (
                       <select
-                        value={bulkHomework[st._id] || 'نعم'}
+                        value={bulkHomework[st._id] || 'جيد'}
                         onChange={(e) =>
                           setBulkHomework({
                             ...bulkHomework,
@@ -509,14 +509,16 @@ const Students = () => {
                         }
                         className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm outline-none"
                       >
-                        <option value="نعم">تم الواجب (نعم)</option>
-                        <option value="لا">لم يكتمل (لا)</option>
+                        <option value="ممتاز">ممتاز</option>
+                        <option value="جيد">جيد</option>
+                        <option value="مقبول">مقبول</option>
+                        <option value="لم يتم">لم يتم</option>
                       </select>
                     )}
 
                     {bulkType === 'rate' && (
                       <select
-                        value={bulkRate[st._id] || 'ممتاز'}
+                        value={bulkRate[st._id] || 'جيد'}
                         onChange={(e) =>
                           setBulkRate({ ...bulkRate, [st._id]: e.target.value })
                         }
