@@ -388,6 +388,7 @@ router.post(
         if (item.rate === 'ممتاز') xpEarned = 5;
         else if (item.rate === 'جيد ') xpEarned = 4;
         else if (item.rate === 'مقبول') xpEarned = 2;
+        else if (item.rate === 'لم يحضر') xpEarned = 0;
 
         student.rate.push({ status: item.rate });
         student.xp += xpEarned;

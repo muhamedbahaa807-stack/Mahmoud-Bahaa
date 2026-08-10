@@ -23,7 +23,7 @@ const MONTHS = [
   'ديسمبر',
 ];
 const ATTENDANCE_OPTIONS = ['حاضر', 'متأخر', 'غائب'];
-const RATE_OPTIONS = ['جيد', 'مقبول', 'ممتاز'];
+const RATE_OPTIONS = ['جيد', 'مقبول', 'ممتاز', 'لم يحضر'];
 
 const Students = () => {
   const { gradeId } = useParams();
