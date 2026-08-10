@@ -37,3 +37,14 @@ export const isAdmin = (req, res, next) => {
   }
   return res.status(403).json({ error: 'Access denied. Admins only.' });
 };
+
+export const errorHandler = (err, req, res, next) => {
+  res
+    .status(err.status || 500)
+    .json({ message: err.message || 'internal server error' });
+};
+export const notFound = (req, res) => {
+  const error = new Error('Not Found');
+  error.status = 404;
+  throw error;
+};

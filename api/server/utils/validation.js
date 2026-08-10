@@ -121,27 +121,11 @@ export const studentSchema = {
       errorMessage: 'Name must be between 3 and 32 characters',
     },
   },
-
-  phone: {
+  studying: {
     notEmpty: {
-      errorMessage: 'Phone is required',
-    },
-    matches: {
-      options: [/^01[0125]\d{8}$/],
-      errorMessage: 'Enter a valid Egyptian phone number',
+      errorMessage: 'Grade is required',
     },
   },
-
-  parentPhone: {
-    notEmpty: {
-      errorMessage: 'Parent phone is required',
-    },
-    matches: {
-      options: [/^01[0125]\d{8}$/],
-      errorMessage: 'Enter a valid Egyptian phone number',
-    },
-  },
-
   gradeId: {
     notEmpty: {
       errorMessage: 'Grade is required',

@@ -122,11 +122,8 @@ const teacherDetails = () => {
   // ---------- Logout ----------
   const handleLogout = async () => {
     setLoggingOut(true);
-    try {
-      await api.post('/logOut');
-    } catch (err) {
-      // ignore network errors here, clear local session anyway
-    }
+    await api.post('/logOut');
+
     logout();
     setLoggingOut(false);
     navigate('/signin');

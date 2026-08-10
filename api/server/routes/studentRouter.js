@@ -7,12 +7,8 @@ import Grade from '../../models/Grade.js';
 import { studentSchema } from '../utils/validation.js';
 const router = Router();
 router.get('/students', verfiyAccessToken, isAdmin, async (req, res) => {
-  try {
-    const students = await Student.find();
-    return res.status(200).json({ students });
-  } catch (err) {
-    return res.status(500).json({ message: 'Internal Server Error' });
-  }
+  const students = await Student.find();
+  return res.status(200).json({ students });
 });
 router.get(
   '/grades/:id/students',
@@ -22,153 +18,154 @@ router.get(
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        message: 'Invalid Grade ID format',
-      });
+      const error = new Error('Invalid Grade ID format');
+      error.status = 400;
+      throw error;
+    }
+    const grade = await Grade.findById(id);
+
+    if (!grade) {
+      const error = new Error('Grade not found');
+      error.status = 404;
+      throw error;
     }
 
-    try {
-      const grade = await Grade.findById(id);
+    const students = await Student.find({ gradeId: id }).sort({ xp: -1 });
 
-      if (!grade) {
-        return res.status(404).json({
-          message: 'Grade not found',
-        });
-      }
-
-      const students = await Student.find({ gradeId: id }).sort({ xp: -1 });
-
-      return res.status(200).json({ students });
-    } catch (err) {
-      return res.status(500).json({
-        message: 'Internal Server Error',
-      });
-    }
+    return res.status(200).json({ students });
   },
 );
 router.post(
   '/grades/:id/students',
   verfiyAccessToken,
+  checkSchema(studentSchema),
   isAdmin,
   async (req, res) => {
+    const result = validationResult(req);
+    if (!result.isEmpty()) {
+      const error = new Error(result.array()[0].msg);
+      error.status = 400;
+      throw error;
+    }
     const { id } = req.params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        message: 'Invalid Grade ID format',
-      });
+      const error = new Error('Invalid Grade ID format');
+      error.status = 400;
+      throw error;
     }
     const { name, phones, studying } = req.body;
-    try {
-      const grade = await Grade.findById(id);
+    const grade = await Grade.findById(id);
 
-      if (!grade) {
-        return res.status(404).json({
-          message: 'Grade not found',
-        });
-      }
-      const isExist = await Student.findOne({
-        'phones.number': {
-          $in: phones.map((phone) => phone.number),
-        },
-      });
-      if (isExist) {
-        return res.status(409).json({ message: 'Phone number already exists' });
-      }
-      const newStudent = await Student.create({
-        name,
-        phones,
-        studying,
-        gradeId: id,
-      });
-      res.status(201).json({ message: 'Student created', Student: newStudent });
-    } catch (err) {
-      return res.status(500).json({ message: 'Internal Server Error' });
+    if (!grade) {
+      const error = new Error('Grade not found');
+      error.status = 404;
+      throw error;
     }
+    const isExist = await Student.findOne({
+      'phones.number': {
+        $in: phones.map((phone) => phone.number),
+      },
+    });
+    if (isExist) {
+      const error = new Error('Phone number already exists');
+      error.status = 409;
+      throw error;
+    }
+    const newStudent = await Student.create({
+      name,
+      phones,
+      studying,
+      gradeId: id,
+    });
+    res.status(201).json({ message: 'Student created', Student: newStudent });
   },
 );
 router.put(
   '/students/Update/:id',
   verfiyAccessToken,
+  checkSchema(studentSchema),
   isAdmin,
   async (req, res) => {
+    const result = validationResult(req);
+    if (!result.isEmpty()) {
+      const error = new Error(result.array()[0].msg);
+      error.status = 400;
+      throw error;
+    }
     const { id } = req.params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        message: 'Invalid Student ID format',
-      });
+      const error = new Error('Invalid ID format');
+      error.status = 400;
+      throw error;
     }
     const { name, phones, studying } = req.body;
-    try {
-      const student = await Student.findById(id);
+    const student = await Student.findById(id);
 
-      if (!student) {
-        return res.status(404).json({
-          message: 'Student not found',
-        });
-      }
-      const isExist = await Student.findOne({
-        _id: { $ne: id },
-        'phones.number': {
-          $in: phones.map((phone) => phone.number),
-        },
-      });
-      if (isExist) {
-        return res.status(409).json({ message: 'Phone number already exists' });
-      }
-      const updatedStudent = await Student.findByIdAndUpdate(
-        id,
-        { name, phones, studying },
-        { new: true, runValidators: true },
-      );
-      res
-        .status(200)
-        .json({ message: 'Student updated', Student: updatedStudent });
-    } catch (err) {
-      return res.status(500).json({ message: 'Internal Server Error' });
+    if (!student) {
+      const error = new Error('Student not found');
+      error.status = 404;
+      throw error;
     }
+    const isExist = await Student.findOne({
+      _id: { $ne: id },
+      'phones.number': {
+        $in: phones.map((phone) => phone.number),
+      },
+    });
+    if (isExist) {
+      const error = new Error('Phone number already exists');
+      error.status = 409;
+      throw error;
+    }
+    const updatedStudent = await Student.findByIdAndUpdate(
+      id,
+      { name, phones, studying },
+      { new: true, runValidators: true },
+    );
+    res
+      .status(200)
+      .json({ message: 'Student updated', Student: updatedStudent });
   },
 );
 router.delete('/students/:id', verfiyAccessToken, isAdmin, async (req, res) => {
   const { id } = req.params;
+
   if (!mongoose.Types.ObjectId.isValid(id)) {
-    return res.status(400).json({
-      message: 'Invalid Student ID format',
-    });
+    const error = new Error('Invalid student ID format');
+    error.status = 400;
+    throw error;
   }
-  try {
-    const deletedStudent = await Student.findByIdAndDelete(id);
 
-    if (!deletedStudent) {
-      return res.status(404).json({
-        message: 'Student not found',
-      });
-    }
+  const deletedStudent = await Student.findByIdAndDelete(id);
 
-    return res.status(200).json({
-      message: 'Student deleted successfully',
-    });
-  } catch (err) {
-    return res.status(500).json({ message: 'Internal Server Error' });
+  if (!deletedStudent) {
+    const error = new Error('Student not found');
+    error.status = 404;
+    throw error;
   }
+
+  res.status(200).json({
+    message: 'Student deleted successfully',
+  });
 });
 router.get('/students/:id', verfiyAccessToken, isAdmin, async (req, res) => {
   const { id } = req.params;
+
   if (!mongoose.Types.ObjectId.isValid(id)) {
-    return res.status(400).json({
-      message: 'Invalid Student ID format',
-    });
+    const error = new Error('Invalid student ID format');
+    error.status = 400;
+    throw error;
   }
-  try {
-    const student = await Student.findById(id);
-    if (!student) {
-      return res.status(404).json({
-        message: 'Student not found',
-      });
-    }
-    res.status(200).json({ student });
-  } catch {
-    return res.status(500).json({ message: 'Internal Server Error' });
+
+  const student = await Student.findById(id);
+
+  if (!student) {
+    const error = new Error('Student not found');
+    error.status = 404;
+    throw error;
   }
+
+  res.status(200).json({ student });
 });
 router.post(
   '/students/:id/attendance',
@@ -179,40 +176,34 @@ router.post(
     const { status } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        message: 'Invalid Student ID format',
-      });
+      const error = new Error('Invalid student ID format');
+      error.status = 400;
+      throw error;
     }
 
     if (!['حاضر', 'متأخر', 'غائب'].includes(status)) {
-      return res.status(400).json({
-        message: 'Invalid attendance status',
-      });
+      const error = new Error('Invalid attendance status');
+      error.status = 400;
+      throw error;
     }
 
-    try {
-      const student = await Student.findById(id);
+    const student = await Student.findById(id);
 
-      if (!student) {
-        return res.status(404).json({
-          message: 'Student not found',
-        });
-      }
-
-      student.attendance.push({
-        status,
-      });
-
-      await student.save();
-
-      return res.status(201).json({
-        message: 'Attendance added successfully',
-      });
-    } catch (err) {
-      return res.status(500).json({
-        message: 'Internal Server Error',
-      });
+    if (!student) {
+      const error = new Error('Student not found');
+      error.status = 404;
+      throw error;
     }
+
+    student.attendance.push({
+      status,
+    });
+
+    await student.save();
+
+    res.status(201).json({
+      message: 'Attendance added successfully',
+    });
   },
 );
 router.get(
@@ -223,44 +214,38 @@ router.get(
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        message: 'Invalid Student ID format',
-      });
+      const error = new Error('Invalid student ID format');
+      error.status = 400;
+      throw error;
     }
 
-    try {
-      const student = await Student.findById(id);
+    const student = await Student.findById(id);
 
-      if (!student) {
-        return res.status(404).json({
-          message: 'Student not found',
-        });
-      }
-
-      const attendance = student.attendance;
-
-      const total = attendance.length;
-
-      const present = attendance.filter((a) => a.status === 'حاضر').length;
-
-      const late = attendance.filter((a) => a.status === 'متأخر').length;
-
-      const absent = attendance.filter((a) => a.status === 'غائب').length;
-
-      return res.status(200).json({
-        summary: {
-          total,
-          present,
-          late,
-          absent,
-        },
-        attendance,
-      });
-    } catch (err) {
-      return res.status(500).json({
-        message: 'Internal Server Error',
-      });
+    if (!student) {
+      const error = new Error('Student not found');
+      error.status = 404;
+      throw error;
     }
+
+    const attendance = student.attendance;
+
+    const total = attendance.length;
+
+    const present = attendance.filter((a) => a.status === 'حاضر').length;
+
+    const late = attendance.filter((a) => a.status === 'متأخر').length;
+
+    const absent = attendance.filter((a) => a.status === 'غائب').length;
+
+    res.status(200).json({
+      summary: {
+        total,
+        present,
+        late,
+        absent,
+      },
+      attendance,
+    });
   },
 );
 router.post(
@@ -272,54 +257,48 @@ router.post(
     const { name, studentScore } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        message: 'Invalid Student ID format',
-      });
+      const error = new Error('Invalid student ID format');
+      error.status = 400;
+      throw error;
     }
 
     if (!name || studentScore === undefined) {
-      return res.status(400).json({
-        message: 'Exam name and student score are required',
-      });
+      const error = new Error('Exam name and student score are required');
+      error.status = 400;
+      throw error;
     }
 
     if (studentScore < 0 || studentScore > 30) {
-      return res.status(400).json({
-        message: 'Student score must be between 0 and 30',
-      });
+      const error = new Error('Student score must be between 0 and 30');
+      error.status = 400;
+      throw error;
     }
 
-    try {
-      const student = await Student.findById(id);
+    const student = await Student.findById(id);
 
-      if (!student) {
-        return res.status(404).json({
-          message: 'Student not found',
-        });
-      }
-
-      const xpEarned = Math.round((studentScore / 30) * 100);
-
-      student.exams.push({
-        name,
-        totalScore: 30,
-        studentScore,
-        xpEarned,
-      });
-
-      student.xp += xpEarned;
-
-      await student.save();
-
-      return res.status(201).json({
-        message: 'Exam added successfully',
-        xpEarned,
-      });
-    } catch (err) {
-      return res.status(500).json({
-        message: 'Internal Server Error',
-      });
+    if (!student) {
+      const error = new Error('Student not found');
+      error.status = 404;
+      throw error;
     }
+
+    const xpEarned = Math.round((studentScore / 30) * 100);
+
+    student.exams.push({
+      name,
+      totalScore: 30,
+      studentScore,
+      xpEarned,
+    });
+
+    student.xp += xpEarned;
+
+    await student.save();
+
+    res.status(201).json({
+      message: 'Exam added successfully',
+      xpEarned,
+    });
   },
 );
 router.get(
@@ -330,28 +309,22 @@ router.get(
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        message: 'Invalid Student ID format',
-      });
+      const error = new Error('Invalid student ID format');
+      error.status = 400;
+      throw error;
     }
 
-    try {
-      const student = await Student.findById(id).select('exams');
+    const student = await Student.findById(id).select('exams');
 
-      if (!student) {
-        return res.status(404).json({
-          message: 'Student not found',
-        });
-      }
-
-      return res.status(200).json({
-        exams: student.exams,
-      });
-    } catch (err) {
-      return res.status(500).json({
-        message: 'Internal Server Error',
-      });
+    if (!student) {
+      const error = new Error('Student not found');
+      error.status = 404;
+      throw error;
     }
+
+    res.status(200).json({
+      exams: student.exams,
+    });
   },
 );
 router.post(
@@ -363,76 +336,70 @@ router.post(
     const { homeWork, rate } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        message: 'Invalid Student ID format',
-      });
+      const error = new Error('Invalid student ID format');
+      error.status = 400;
+      throw error;
     }
 
     if (!['نعم', 'لا'].includes(homeWork)) {
-      return res.status(400).json({
-        message: 'Invalid homework status',
-      });
+      const error = new Error('Invalid homework status');
+      error.status = 400;
+      throw error;
     }
 
     if (!['ممتاز', 'جيد جدا', 'مقبول'].includes(rate)) {
-      return res.status(400).json({
-        message: 'Invalid rate',
-      });
+      const error = new Error('Invalid rate');
+      error.status = 400;
+      throw error;
     }
 
-    try {
-      const student = await Student.findById(id);
+    const student = await Student.findById(id);
 
-      if (!student) {
-        return res.status(404).json({
-          message: 'Student not found',
-        });
-      }
+    if (!student) {
+      const error = new Error('Student not found');
+      error.status = 404;
+      throw error;
+    }
 
-      let xpEarned = 0;
+    let xpEarned = 0;
 
-      // Homework XP
-      if (homeWork === 'نعم') {
+    // Homework XP
+    if (homeWork === 'نعم') {
+      xpEarned += 5;
+    }
+
+    // Rate XP
+    switch (rate) {
+      case 'ممتاز':
         xpEarned += 5;
-      }
+        break;
 
-      // Rate XP
-      switch (rate) {
-        case 'ممتاز':
-          xpEarned += 5;
-          break;
+      case 'جيد جدا':
+        xpEarned += 4;
+        break;
 
-        case 'جيد جدا':
-          xpEarned += 4;
-          break;
-
-        case 'مقبول':
-          xpEarned += 3;
-          break;
-      }
-
-      student.homeWork.push({
-        status: homeWork,
-      });
-
-      student.rate.push({
-        status: rate,
-      });
-
-      student.xp += xpEarned;
-
-      await student.save();
-
-      return res.status(201).json({
-        message: 'Session saved successfully',
-        xpEarned,
-        totalXP: student.xp,
-      });
-    } catch (err) {
-      return res.status(500).json({
-        message: 'Internal Server Error',
-      });
+      case 'مقبول':
+        xpEarned += 3;
+        break;
     }
+
+    student.homeWork.push({
+      status: homeWork,
+    });
+
+    student.rate.push({
+      status: rate,
+    });
+
+    student.xp += xpEarned;
+
+    await student.save();
+
+    res.status(201).json({
+      message: 'Session saved successfully',
+      xpEarned,
+      totalXP: student.xp,
+    });
   },
 );
 router.put(
@@ -444,57 +411,49 @@ router.put(
     const { month, isPaid } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        message: 'Invalid Student ID format',
-      });
+      const error = new Error('Invalid student ID format');
+      error.status = 400;
+      throw error;
     }
 
     if (month < 1 || month > 12) {
-      return res.status(400).json({
-        message: 'Month must be between 1 and 12',
-      });
+      const error = new Error('Month must be between 1 and 12');
+      error.status = 400;
+      throw error;
     }
 
     if (typeof isPaid !== 'boolean') {
-      return res.status(400).json({
-        message: 'isPaid must be true or false',
+      const error = new Error('isPaid must be true or false');
+      error.status = 400;
+      throw error;
+    }
+
+    const student = await Student.findById(id);
+
+    if (!student) {
+      const error = new Error('Student not found');
+      error.status = 404;
+      throw error;
+    }
+
+    const payment = student.payments.find((payment) => payment.month === month);
+
+    if (payment) {
+      payment.isPaid = isPaid;
+      payment.paidAt = Date.now();
+    } else {
+      student.payments.push({
+        month,
+        isPaid,
       });
     }
 
-    try {
-      const student = await Student.findById(id);
+    await student.save();
 
-      if (!student) {
-        return res.status(404).json({
-          message: 'Student not found',
-        });
-      }
-
-      const payment = student.payments.find(
-        (payment) => payment.month === month,
-      );
-
-      if (payment) {
-        payment.isPaid = isPaid;
-        payment.paidAt = Date.now();
-      } else {
-        student.payments.push({
-          month,
-          isPaid,
-        });
-      }
-
-      await student.save();
-
-      return res.status(200).json({
-        message: 'Payment updated successfully',
-        payments: student.payments,
-      });
-    } catch (err) {
-      return res.status(500).json({
-        message: 'Internal Server Error',
-      });
-    }
+    res.status(200).json({
+      message: 'Payment updated successfully',
+      payments: student.payments,
+    });
   },
 );
 export default router;
