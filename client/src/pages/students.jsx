@@ -8,6 +8,20 @@ const STUDYING_OPTIONS = [
   { value: 'عام', label: 'عام' },
   { value: 'ازهر', label: 'أزهر' },
 ];
+const MONTHS = [
+  'يناير',
+  'فبراير',
+  'مارس',
+  'أبريل',
+  'مايو',
+  'يونيو',
+  'يوليو',
+  'أغسطس',
+  'سبتمبر',
+  'أكتوبر',
+  'نوفمبر',
+  'ديسمبر',
+];
 const ATTENDANCE_OPTIONS = ['حاضر', 'متأخر', 'غائب'];
 const RATE_OPTIONS = ['ممتاز', 'جيد جدا', 'مقبول'];
 
@@ -49,6 +63,11 @@ const Students = () => {
   // --- Delete confirm ---
   const [deleteStudent, setDeleteStudent] = useState(null);
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
+
+  const [paymentStudent, setPaymentStudent] = useState(null);
+  const [paymentMonth, setPaymentMonth] = useState('');
+  const [paymentSubmitting, setPaymentSubmitting] = useState(false);
+  const [paymentError, setPaymentError] = useState('');
 
   const fetchStudents = async () => {
     setLoading(true);
@@ -94,7 +113,11 @@ const Students = () => {
 
     setBulkActionOpen(true);
   };
-
+  const openPaymentForm = (student) => {
+    setPaymentStudent(student);
+    setPaymentMonth('');
+    setPaymentError('');
+  };
   // ---------- حفظ بيانات الـ Bulk Modals ----------
   const handleBulkSubmit = async (e) => {
     e.preventDefault();
@@ -152,7 +175,43 @@ const Students = () => {
     }
     setBulkSubmitting(false);
   };
+  const handlePaymentSubmit = async (e) => {
+    e.preventDefault();
 
+    if (!paymentMonth) {
+      setPaymentError('اختار الشهر');
+      return;
+    }
+
+    setPaymentSubmitting(true);
+    setPaymentError('');
+
+    try {
+      const { data } = await api.put(
+        `/students/${paymentStudent._id}/payments`,
+        {
+          month: Number(paymentMonth),
+          isPaid: true,
+        },
+      );
+
+      setStudents((prev) =>
+        prev.map((student) =>
+          student._id === paymentStudent._id
+            ? { ...student, payments: data.payments }
+            : student,
+        ),
+      );
+
+      setPaymentStudent(null);
+    } catch (err) {
+      setPaymentError(
+        err.response?.data?.message || 'حدث خطأ أثناء تسجيل الدفع',
+      );
+    } finally {
+      setPaymentSubmitting(false);
+    }
+  };
   // ---------- Add / Edit form logic ----------
   const availableOwners = (currentIndex) => {
     const usedElsewhere = formPhones
@@ -358,6 +417,7 @@ const Students = () => {
                 rank={students.findIndex((s) => s._id === student._id)}
                 onEdit={openEditForm}
                 onDelete={setDeleteStudent}
+                onAction={openPaymentForm}
               />
             ))}
           </div>
@@ -605,7 +665,67 @@ const Students = () => {
           </div>
         </div>
       )}
+      {/* ---------------- Payment Modal ---------------- */}
+      {paymentStudent && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm"
+          onClick={() => setPaymentStudent(null)}
+        >
+          <div
+            dir="rtl"
+            onClick={(e) => e.stopPropagation()}
+            className="relative w-full max-w-md rounded-3xl border border-white/60 bg-white/75 p-8 shadow-2xl backdrop-blur-2xl"
+          >
+            <button
+              type="button"
+              onClick={() => setPaymentStudent(null)}
+              className="absolute left-5 top-5 flex h-8 w-8 items-center justify-center rounded-full text-ink/50 hover:bg-ink/5"
+            >
+              ✕
+            </button>
 
+            <h2 className="font-display text-2xl font-extrabold text-ink">
+              💰 دفع الشهر
+            </h2>
+
+            <p className="mt-2 text-sm text-ink/60">
+              تسجيل دفع شهر للطالب: {paymentStudent.name}
+            </p>
+
+            <form
+              onSubmit={handlePaymentSubmit}
+              className="mt-6 flex flex-col gap-5"
+            >
+              <select
+                value={paymentMonth}
+                onChange={(e) => setPaymentMonth(e.target.value)}
+                required
+                className="w-full rounded-2xl border border-white/70 bg-white/70 px-4 py-3 text-ink outline-none"
+              >
+                <option value="">اختار الشهر</option>
+
+                {MONTHS.map((month, index) => (
+                  <option key={index + 1} value={index + 1}>
+                    {month}
+                  </option>
+                ))}
+              </select>
+
+              {paymentError && (
+                <div className="text-sm text-red-600">{paymentError}</div>
+              )}
+
+              <button
+                type="submit"
+                disabled={paymentSubmitting}
+                className="w-full rounded-2xl bg-ink py-3.5 font-semibold text-white transition hover:bg-amber-700 disabled:opacity-60"
+              >
+                {paymentSubmitting ? 'جارِ تسجيل الدفع...' : 'تأكيد الدفع'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
       {/* ---------------- Delete Modal ---------------- */}
       {deleteStudent && (
         <div

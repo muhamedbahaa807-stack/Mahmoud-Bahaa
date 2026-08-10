@@ -80,21 +80,6 @@ const OneStudent = ({ student, rank, onEdit, onDelete, onAction }) => {
         {/* Actions */}
         <div className="scrollbar-thin flex items-center gap-2 overflow-x-auto pb-1 lg:pb-0">
           <ActionButton
-            label="بداية حصة"
-            emoji="▶️"
-            onClick={() => onAction(student, 'attendance')}
-          />
-          <ActionButton
-            label="إنهاء حصة"
-            emoji="⏹️"
-            onClick={() => onAction(student, 'session')}
-          />
-          <ActionButton
-            label="امتحان"
-            emoji="📝"
-            onClick={() => onAction(student, 'exam')}
-          />
-          <ActionButton
             label="دفع الشهر"
             emoji="💰"
             onClick={() => onAction(student, 'payment')}
