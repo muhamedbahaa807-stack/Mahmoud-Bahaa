@@ -18,17 +18,7 @@ mongoose
   .catch((err) => console.log(`Error ${err}`));
 app.use(express.json());
 app.use(cookieParser());
-router.get('/students/update', async (req, res) => {
-  await Student.updateMany(
-    {},
-    {
-      $set: {
-        attendance: [],
-      },
-    },
-  );
-  res.send('Done');
-});
+
 app.use(mainRouter);
 app.use(notFound);
 app.use(errorHandler);
