@@ -342,10 +342,10 @@ router.post(
       const student = students.find((s) => s._id.toString() === item.studentId);
       if (student) {
         let xpEarned = 0;
-        if (item.rate === 'ممتاز') xpEarned = 5;
-        else if (item.rate === 'جيد') xpEarned = 4;
-        else if (item.rate === 'مقبول') xpEarned = 2;
-        else if (item.rate === 'لم يتم') xpEarned = 0;
+        if (item.status === 'ممتاز') xpEarned = 5;
+        else if (item.status === 'جيد') xpEarned = 4;
+        else if (item.status === 'مقبول') xpEarned = 2;
+        else if (item.status === 'لم يحضر') xpEarned = 0;
         student.homeWork.push({ status: item.status });
         student.xp += xpEarned;
         await student.save();
